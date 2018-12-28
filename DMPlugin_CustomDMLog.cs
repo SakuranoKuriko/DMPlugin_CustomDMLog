@@ -1,13 +1,19 @@
 ﻿using System;
+using System.Diagnostics;
 using System.IO;
+using System.Text.RegularExpressions;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace DMPluginTest
 {
     public class Class1 : BilibiliDM_PluginFramework.DMPlugin
     {
+        const string defaultConfig = "{\"AutoStart\": 0, \"Format\": \"{name}: {comment}\"}";
         string filepath = null;
-        string defaultConfig = "{\"Format\": \"{name}: {comment}\", \"AutoStart\": \"0\"}";
+        string configFile = null;
+        JObject config = null;
+        Regex timeRegex = null;
         public Class1()
         {
             this.Connected += Class1_Connected;
@@ -20,13 +26,32 @@ namespace DMPluginTest
             this.PluginVer = "v1.0.0";
         }
 
-        public void pushComment(string user, string msg)
+        public void loadConfig()
         {
-            string comment = msg.Replace("{name}", user);
-            comment = comment.Replace("{comment}", msg);
-            Log(user);
-            Log(msg);
-            Log(user);
+            string configstr = defaultConfig;
+            if (File.Exists(configFile))
+                configstr = File.ReadAllText(configFile);
+            else File.WriteAllText(configFile, defaultConfig);
+            config = JObject.Parse(configstr);
+        }
+
+        public void pushComment(BilibiliDM_PluginFramework.DanmakuModel dm)
+        {
+            string comment = config["Format"].ToString().Replace("{name}", dm.UserName);
+            comment = comment.Replace("{comment}", dm.CommentText);
+            DateTime timenow = DateTime.Now;
+            comment = comment.Replace("{time}", timenow.ToString("HH:mm:ss"));
+            MatchCollection matches = timeRegex.Matches(comment);
+            if (matches.Count>0)
+            {
+                foreach (Match match in matches)
+                {
+                    comment = comment.Replace("{time:"+match.Groups[0].Value+"}", timenow.ToString(match.Groups[0].Value));
+                }
+            }
+#if DEBUG
+            Log(dm.RawData);
+#endif
             File.AppendAllText(filepath, comment+"\r\n");
         }
 
@@ -38,7 +63,7 @@ namespace DMPluginTest
         private void Class1_ReceivedDanmaku(object sender, BilibiliDM_PluginFramework.ReceivedDanmakuArgs e)
         {
             if (e.Danmaku.MsgType==BilibiliDM_PluginFramework.MsgTypeEnum.Comment)
-                pushComment(e.Danmaku.UserName, e.Danmaku.CommentText);
+                pushComment(e.Danmaku);
         }
 
         private void Class1_Disconnected(object sender, BilibiliDM_PluginFramework.DisconnectEvtArgs e)
@@ -52,6 +77,11 @@ namespace DMPluginTest
         }
 
         public override void Inited(){
+            string p = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + "\\弹幕姬\\";
+            filepath = p+"comment.txt";
+            configFile = p+"Plugins\\CustomDMLog.conf";
+            timeRegex = new Regex("{time:(.*?)}");
+            loadConfig();
             Start();
             base.Inited();
         }
@@ -59,6 +89,7 @@ namespace DMPluginTest
         public override void Admin()
         {
             //請勿使用任何阻塞方法
+            Process.Start("notepad", configFile);
             base.Admin();
         }
 
@@ -71,12 +102,7 @@ namespace DMPluginTest
         public override void Start()
         {
             //請勿使用任何阻塞方法
-            string p = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + "\\弹幕姬\\";
-            filepath = p+"comment.txt";
-            string formatfile = p+"Danmaku2File.cfg";
-            if (File.Exists(formatfile))
-                fileformat = File.ReadAllText(formatfile);
-            else File.WriteAllText(formatfile, fileformat);
+            loadConfig();
             base.Start();
         }
     }
