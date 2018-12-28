@@ -9,11 +9,10 @@ namespace DMPluginTest
 {
     public class Class1 : BilibiliDM_PluginFramework.DMPlugin
     {
-        const string defaultConfig = "{\"AutoStart\": 0, \"Format\": \"{name}: {comment}\"}";
+        const string defaultConfig = "{\"AutoStart\": 0, \"Format\": \"[{time:HH:mm:ss}]{name}: {comment}\"}";
         string filepath = null;
         string configFile = null;
         JObject config = null;
-        Regex timeRegex = null;
         public Class1()
         {
             this.Connected += Class1_Connected;
@@ -21,9 +20,10 @@ namespace DMPluginTest
             this.ReceivedDanmaku += Class1_ReceivedDanmaku;
             this.ReceivedRoomCount += Class1_ReceivedRoomCount;
             this.PluginAuth = "桜野くりこ";
-            this.PluginName = "自定义弹幕日志";
+            this.PluginName = "自訂彈幕Log";
             this.PluginCont = "mao.liz.baka@gmail.com";
             this.PluginVer = "v1.0.0";
+            this.PluginDesc = "停用再啟用即可刷新設置";
         }
 
         public void loadConfig()
@@ -41,12 +41,18 @@ namespace DMPluginTest
             comment = comment.Replace("{comment}", dm.CommentText);
             DateTime timenow = DateTime.Now;
             comment = comment.Replace("{time}", timenow.ToString("HH:mm:ss"));
-            MatchCollection matches = timeRegex.Matches(comment);
+            MatchCollection matches = Regex.Matches(comment, "{time:(?<format>.*?)}");
+#if DEBUG
+            Log(matches.Count.ToString());
+#endif
             if (matches.Count>0)
             {
                 foreach (Match match in matches)
                 {
-                    comment = comment.Replace("{time:"+match.Groups[0].Value+"}", timenow.ToString(match.Groups[0].Value));
+                    comment = comment.Replace("{time:"+match.Groups["format"].Value+"}", timenow.ToString(match.Groups["format"].Value));
+#if DEBUG
+                    Log(match.Groups["format"].Value);
+#endif
                 }
             }
 #if DEBUG
@@ -80,9 +86,9 @@ namespace DMPluginTest
             string p = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + "\\弹幕姬\\";
             filepath = p+"comment.txt";
             configFile = p+"Plugins\\CustomDMLog.conf";
-            timeRegex = new Regex("{time:(.*?)}");
             loadConfig();
-            Start();
+            if (config["AutoStart"].ToString()=="1")
+                Start();
             base.Inited();
         }
 
