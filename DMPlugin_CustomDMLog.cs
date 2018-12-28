@@ -9,7 +9,7 @@ namespace DMPluginTest
 {
     public class Class1 : BilibiliDM_PluginFramework.DMPlugin
     {
-        const string defaultConfig = "{\"AutoStart\": 0, \"Format\": \"[{time:HH:mm:ss}]{name}: {comment}\"}";
+        const string defaultConfig = "{\"AutoStart\": 0, \"LogFile\": \"comment.txt\", \"Format\": \"[{time:HH:mm:ss}]{name}: {comment}\"}";
         string filepath = null;
         string configFile = null;
         JObject config = null;
@@ -84,9 +84,11 @@ namespace DMPluginTest
 
         public override void Inited(){
             string p = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + "\\弹幕姬\\";
-            filepath = p+"comment.txt";
             configFile = p+"Plugins\\CustomDMLog.conf";
             loadConfig();
+            filepath = p+"comment.txt";
+            if (config["LogFile"].ToString()!="")
+                filepath = p+config["LogFile"].ToString();
             if (config["AutoStart"].ToString()=="1")
                 Start();
             base.Inited();
