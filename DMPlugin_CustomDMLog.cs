@@ -7,7 +7,7 @@ namespace DMPluginTest
     public class Class1 : BilibiliDM_PluginFramework.DMPlugin
     {
         string filepath = null;
-        string defaultConfig = "{\"format\": \"{name}: {comment}\", \"\"}";
+        string defaultConfig = "{\"Format\": \"{name}: {comment}\", \"AutoStart\": \"0\"}";
         public Class1()
         {
             this.Connected += Class1_Connected;
@@ -17,7 +17,7 @@ namespace DMPluginTest
             this.PluginAuth = "桜野くりこ";
             this.PluginName = "自定义弹幕日志";
             this.PluginCont = "mao.liz.baka@gmail.com";
-            this.PluginVer = "v0.0.1";
+            this.PluginVer = "v1.0.0";
         }
 
         public void pushComment(string user, string msg)
