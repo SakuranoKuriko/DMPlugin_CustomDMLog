@@ -12,7 +12,7 @@ namespace DMPluginTest
 {
     public class CustomDMLog : BilibiliDM_PluginFramework.DMPlugin
     {
-        const string defaultConfigStr = "{\"AutoStart\":0,\"LogFile\":\"comment.txt\",\"Format\":\"[{time:HH:mm:ss}]{name}:{comment}\",\"FileWritePeroid\":\"500\",\"Debug\":0}";
+        const string defaultConfigStr = "{\"AutoStart\":0,\"LogFile\":\"comment.txt\",\"Format\":\"[{time:HH:mm:ss}]{name}:{comment}\",\"FileWritePeroid\":500,\"Debug\":0}";
         bool debug = false;
         string filepath = null;
         string configFile = null;
